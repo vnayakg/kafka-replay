@@ -37,6 +37,13 @@ type Config struct {
 
 	// Metrics configuration
 	MetricsPort int // 0 = disabled
+
+	// Producer tuning (zero values use defaults in producer)
+	ProducerBatchMaxBytes    int32
+	ProducerLinger           time.Duration
+	ProducerRetries          int
+	ProducerRequireAllAcks   *bool
+	ProducerMaxBufferedScale int
 }
 
 // DefaultConfig returns a Config with sensible defaults.

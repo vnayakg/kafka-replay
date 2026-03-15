@@ -181,13 +181,13 @@ for {
 
 The producer wraps a franz-go `kgo.Client` configured for high throughput:
 
-| Setting | Value | Why |
-|---|---|---|
-| `ProducerBatchMaxBytes` | 1 MB | Amortize per-produce overhead |
-| `ProducerLinger` | 5 ms | Allow time for batching without adding significant latency |
-| `RequiredAcks` | AllISRAcks | Wait for all in-sync replicas for durability |
-| `RecordRetries` | 3 | Automatic retry on transient broker errors |
-| `MaxBufferedRecords` | BatchSize * 2 | Backpressure when target is slow |
+| Setting | Default | Flag | Why |
+|---|---|---|---|
+| `ProducerBatchMaxBytes` | 1 MB | `--producer-batch-max-bytes` | Amortize per-produce overhead |
+| `ProducerLinger` | 5 ms | `--producer-linger` | Allow time for batching without adding significant latency |
+| `RequiredAcks` | AllISRAcks | `--producer-all-acks` | Wait for all in-sync replicas for durability |
+| `RecordRetries` | 3 | `--producer-retries` | Automatic retry on transient broker errors |
+| `MaxBufferedRecords` | BatchSize * 2 | `--producer-max-buffered-scale` | Backpressure when target is slow |
 
 When producing, the original record's **key, value, headers, and timestamp** are preserved. Only the **topic** is overridden to the target topic. This means:
 - Key-based partition assignment works correctly in the target
@@ -303,6 +303,13 @@ Flags:
 
   Checkpoint:
     --checkpoint-dir string    Directory for checkpoint files (empty = no checkpointing)
+
+  Producer Tuning:
+    --producer-batch-max-bytes int32    Max bytes per producer batch (default 1048576 / 1MB)
+    --producer-linger duration          How long to wait to fill a batch (default 5ms)
+    --producer-retries int              Number of produce retries (default 3)
+    --producer-all-acks                 Require acks from all in-sync replicas (default true)
+    --producer-max-buffered-scale int   MaxBufferedRecords = batch-size * scale (default 2)
 ```
 
 ### `kafka-replay inspect`

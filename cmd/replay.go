@@ -58,6 +58,13 @@ func init() {
 	// Checkpoint
 	f.String("checkpoint-dir", "", "Directory for checkpoint files (empty = no checkpointing)")
 
+	// Producer tuning
+	f.Int32("producer-batch-max-bytes", 0, "Max bytes per producer batch (default: 1MB)")
+	f.Duration("producer-linger", 0, "How long to wait to fill a producer batch (default: 5ms)")
+	f.Int("producer-retries", 0, "Number of produce retries (default: 3)")
+	f.Bool("producer-all-acks", true, "Require acks from all in-sync replicas (default: true)")
+	f.Int("producer-max-buffered-scale", 0, "MaxBufferedRecords = batch-size * scale (default: 2)")
+
 	_ = replayCmd.MarkFlagRequired("source-topic")
 
 	rootCmd.AddCommand(replayCmd)
@@ -195,6 +202,16 @@ func buildReplayConfig(cmd *cobra.Command) (*config.Config, error) {
 	cfg.ExactlyOnce, _ = cmd.Flags().GetBool("exactly-once")
 	cfg.Verbose, _ = cmd.Flags().GetBool("verbose")
 	cfg.CheckpointDir, _ = cmd.Flags().GetString("checkpoint-dir")
+
+	// Producer tuning
+	cfg.ProducerBatchMaxBytes, _ = cmd.Flags().GetInt32("producer-batch-max-bytes")
+	cfg.ProducerLinger, _ = cmd.Flags().GetDuration("producer-linger")
+	cfg.ProducerRetries, _ = cmd.Flags().GetInt("producer-retries")
+	cfg.ProducerMaxBufferedScale, _ = cmd.Flags().GetInt("producer-max-buffered-scale")
+	if cmd.Flags().Changed("producer-all-acks") {
+		v, _ := cmd.Flags().GetBool("producer-all-acks")
+		cfg.ProducerRequireAllAcks = &v
+	}
 
 	return cfg, nil
 }

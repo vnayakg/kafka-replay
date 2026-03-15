@@ -92,11 +92,16 @@ func (p *Pipeline) Run(ctx context.Context) (*Stats, error) {
 	// Create producer (unless dry-run)
 	if !p.cfg.DryRun {
 		producerCfg := ProducerConfig{
-			Brokers:     p.cfg.TargetBrokers,
-			Topic:       p.cfg.TargetTopic,
-			BatchSize:   p.cfg.BatchSize,
-			ExactlyOnce: p.cfg.ExactlyOnce,
-			SessionID:   fmt.Sprintf("%s-%d", p.cfg.SourceTopic, time.Now().UnixNano()),
+			Brokers:          p.cfg.TargetBrokers,
+			Topic:            p.cfg.TargetTopic,
+			BatchSize:        p.cfg.BatchSize,
+			ExactlyOnce:      p.cfg.ExactlyOnce,
+			SessionID:        fmt.Sprintf("%s-%d", p.cfg.SourceTopic, time.Now().UnixNano()),
+			BatchMaxBytes:    p.cfg.ProducerBatchMaxBytes,
+			Linger:           p.cfg.ProducerLinger,
+			Retries:          p.cfg.ProducerRetries,
+			RequireAllAcks:   p.cfg.ProducerRequireAllAcks,
+			MaxBufferedScale: p.cfg.ProducerMaxBufferedScale,
 		}
 		p.producer, err = NewProducer(producerCfg)
 		if err != nil {

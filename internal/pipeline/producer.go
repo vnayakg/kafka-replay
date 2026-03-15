@@ -16,6 +16,13 @@ type ProducerConfig struct {
 	BatchSize   int
 	ExactlyOnce bool
 	SessionID   string
+
+	// Tuning options (zero values use defaults).
+	BatchMaxBytes    int32         // default: 1MB (1<<20)
+	Linger           time.Duration // default: 5ms
+	Retries          int           // default: 3
+	RequireAllAcks   *bool         // default: true (AllISRAcks)
+	MaxBufferedScale int           // multiplier for BatchSize to set MaxBufferedRecords; default: 2
 }
 
 // Producer wraps a franz-go client for batched, idempotent production.
@@ -28,14 +35,36 @@ type Producer struct {
 
 // NewProducer creates a Producer configured for high-throughput idempotent production.
 func NewProducer(cfg ProducerConfig) (*Producer, error) {
+	// Apply defaults for zero-value tuning options.
+	batchMaxBytes := cfg.BatchMaxBytes
+	if batchMaxBytes == 0 {
+		batchMaxBytes = 1 << 20 // 1MB
+	}
+	linger := cfg.Linger
+	if linger == 0 {
+		linger = 5 * time.Millisecond
+	}
+	retries := cfg.Retries
+	if retries == 0 {
+		retries = 3
+	}
+	bufferedScale := cfg.MaxBufferedScale
+	if bufferedScale == 0 {
+		bufferedScale = 2
+	}
+	acks := kgo.AllISRAcks()
+	if cfg.RequireAllAcks != nil && !*cfg.RequireAllAcks {
+		acks = kgo.LeaderAck()
+	}
+
 	opts := []kgo.Opt{
 		kgo.SeedBrokers(cfg.Brokers...),
 		kgo.DefaultProduceTopic(cfg.Topic),
-		kgo.ProducerBatchMaxBytes(1 << 20), // 1MB batch
-		kgo.ProducerLinger(5 * time.Millisecond),
-		kgo.RecordRetries(3),
-		kgo.RequiredAcks(kgo.AllISRAcks()),
-		kgo.MaxBufferedRecords(cfg.BatchSize * 2),
+		kgo.ProducerBatchMaxBytes(batchMaxBytes),
+		kgo.ProducerLinger(linger),
+		kgo.RecordRetries(retries),
+		kgo.RequiredAcks(acks),
+		kgo.MaxBufferedRecords(cfg.BatchSize * bufferedScale),
 	}
 
 	if cfg.ExactlyOnce {
