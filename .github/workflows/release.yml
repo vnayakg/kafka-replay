@@ -1,0 +1,73 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build all platforms
+        run: |
+          VERSION=${GITHUB_REF_NAME}
+          GIT_COMMIT=${GITHUB_SHA::7}
+          BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          LDFLAGS="-X github.com/vnayakg/kafka-replay/cmd.Version=${VERSION} \
+            -X github.com/vnayakg/kafka-replay/cmd.GitCommit=${GIT_COMMIT} \
+            -X github.com/vnayakg/kafka-replay/cmd.BuildDate=${BUILD_DATE}"
+
+          mkdir -p dist
+
+          for GOOS in linux darwin; do
+            for GOARCH in amd64 arm64; do
+              output="kafka-replay-${GOOS}-${GOARCH}"
+              echo "Building ${output}..."
+              GOOS=${GOOS} GOARCH=${GOARCH} go build -ldflags "${LDFLAGS}" -o "dist/${output}" .
+            done
+          done
+
+      - name: Generate checksums
+        working-directory: dist
+        run: sha256sum kafka-replay-* > checksums.txt
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get previous tag
+          PREV_TAG=$(git tag --sort=-version:refname | head -2 | tail -1)
+          if [ -z "$PREV_TAG" ]; then
+            echo "body=Initial release" >> $GITHUB_OUTPUT
+          else
+            LOG=$(git log --oneline ${PREV_TAG}..HEAD --no-merges)
+            # Write multiline output
+            {
+              echo "body<<EOF"
+              echo "## Changes"
+              echo ""
+              echo "$LOG"
+              echo "EOF"
+            } >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          body: ${{ steps.changelog.outputs.body }}
+          files: |
+            dist/kafka-replay-*
+            dist/checksums.txt
+          generate_release_notes: true
