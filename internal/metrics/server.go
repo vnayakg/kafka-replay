@@ -34,6 +34,6 @@ func StartServer(ctx context.Context, port int) {
 
 	go func() {
 		<-ctx.Done()
-		srv.Shutdown(context.Background())
+		_ = srv.Shutdown(context.Background())
 	}()
 }

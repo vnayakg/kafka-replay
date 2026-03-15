@@ -102,7 +102,7 @@ func (p *Pipeline) Run(ctx context.Context) (*Stats, error) {
 		if err != nil {
 			return p.stats, fmt.Errorf("create producer: %w", err)
 		}
-		defer p.producer.Close(ctx)
+		defer func() { _ = p.producer.Close(ctx) }()
 	}
 
 	// Launch partition goroutines

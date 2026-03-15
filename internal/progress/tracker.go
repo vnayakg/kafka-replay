@@ -92,15 +92,15 @@ func (t *Tracker) PrintSummary(w io.Writer) {
 		totalErrors += pp.Errors.Load()
 	}
 
-	fmt.Fprintf(w, "\n--- Replay Summary ---\n")
-	fmt.Fprintf(w, "Duration:   %s\n", elapsed.Round(time.Millisecond))
-	fmt.Fprintf(w, "Consumed:   %d\n", totalConsumed)
-	fmt.Fprintf(w, "Produced:   %d\n", totalProduced)
-	fmt.Fprintf(w, "Filtered:   %d\n", totalFiltered)
-	fmt.Fprintf(w, "Errors:     %d\n", totalErrors)
-	fmt.Fprintf(w, "Partitions: %d\n", len(t.partitions))
+	_, _ = fmt.Fprintf(w, "\n--- Replay Summary ---\n")
+	_, _ = fmt.Fprintf(w, "Duration:   %s\n", elapsed.Round(time.Millisecond))
+	_, _ = fmt.Fprintf(w, "Consumed:   %d\n", totalConsumed)
+	_, _ = fmt.Fprintf(w, "Produced:   %d\n", totalProduced)
+	_, _ = fmt.Fprintf(w, "Filtered:   %d\n", totalFiltered)
+	_, _ = fmt.Fprintf(w, "Errors:     %d\n", totalErrors)
+	_, _ = fmt.Fprintf(w, "Partitions: %d\n", len(t.partitions))
 	if elapsed.Seconds() > 0 {
 		throughput := float64(totalProduced) / elapsed.Seconds()
-		fmt.Fprintf(w, "Throughput: %.0f msgs/sec\n", throughput)
+		_, _ = fmt.Fprintf(w, "Throughput: %.0f msgs/sec\n", throughput)
 	}
 }
